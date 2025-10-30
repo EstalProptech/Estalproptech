@@ -1,0 +1,33 @@
+# Supabase Configuration File
+# For Supabase CLI and Edge Function Deployment
+
+[project]
+# Your Supabase project reference
+# Find this in: Supabase Dashboard → Settings → General
+project_id = "ttsasgbrmswtjtenmksw"
+
+[api]
+# API settings
+enabled = true
+port = 54321
+max_rows = 1000
+
+[db]
+# Database settings
+port = 54322
+
+[studio]
+# Supabase Studio settings
+enabled = true
+port = 54323
+
+[auth]
+# Auth settings
+enabled = true
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["https://estalproptech.com"]
+jwt_expiry = 3600
+
+[functions.make-server-96250128]
+# Edge Function Configuration
+verify_jwt = false

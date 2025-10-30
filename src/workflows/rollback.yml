@@ -1,0 +1,304 @@
+name: Rollback Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to rollback'
+        required: true
+        type: choice
+        options:
+          - production
+          - staging
+      target_version:
+        description: 'Git SHA or tag to rollback to (leave empty for previous)'
+        required: false
+        type: string
+      reason:
+        description: 'Reason for rollback'
+        required: true
+        type: string
+
+env:
+  NODE_VERSION: '20.x'
+
+jobs:
+  # ============================================================================
+  # Validate Rollback Request
+  # ============================================================================
+  validate:
+    name: Validate Rollback
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    outputs:
+      target_sha: ${{ steps.determine.outputs.target_sha }}
+      current_sha: ${{ steps.current.outputs.sha }}
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔍 Get current deployment
+        id: current
+        run: |
+          # Get current production SHA from Vercel
+          CURRENT_SHA=$(curl -s "https://api.vercel.com/v13/deployments" \
+            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
+            | jq -r '.deployments[0].meta.githubCommitSha')
+          
+          echo "sha=$CURRENT_SHA" >> $GITHUB_OUTPUT
+          echo "Current deployment: $CURRENT_SHA"
+
+      - name: 🎯 Determine target version
+        id: determine
+        run: |
+          if [ -n "${{ inputs.target_version }}" ]; then
+            TARGET="${{ inputs.target_version }}"
+          else
+            # Get previous commit
+            TARGET=$(git rev-parse HEAD~1)
+          fi
+          
+          echo "target_sha=$TARGET" >> $GITHUB_OUTPUT
+          echo "Target version: $TARGET"
+
+      - name: ✅ Validate target exists
+        run: |
+          git rev-parse ${{ steps.determine.outputs.target_sha }} || exit 1
+          echo "✅ Target version is valid"
+
+      - name: 📊 Compare versions
+        run: |
+          echo "Rolling back from:"
+          git log -1 --oneline ${{ steps.current.outputs.sha }}
+          echo ""
+          echo "Rolling back to:"
+          git log -1 --oneline ${{ steps.determine.outputs.target_sha }}
+
+  # ============================================================================
+  # Backup Current State
+  # ============================================================================
+  backup:
+    name: Backup Current State
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 📥 Checkout current version
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.validate.outputs.current_sha }}
+
+      - name: 💾 Backup database
+        uses: supabase/setup-cli@v1
+      
+      - name: 📦 Create backup
+        run: |
+          mkdir -p rollback-backups
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          
+          # Database backup
+          supabase db dump --db-url "${{ secrets.SUPABASE_DB_URL }}" > "rollback-backups/pre-rollback-db-${TIMESTAMP}.sql"
+          
+          echo "✅ Backup created"
+
+      - name: ☁️ Upload backup
+        uses: actions/upload-artifact@v4
+        with:
+          name: pre-rollback-backup-${{ needs.validate.outputs.current_sha }}
+          path: rollback-backups/
+          retention-days: 90
+
+  # ============================================================================
+  # Execute Rollback
+  # ============================================================================
+  rollback:
+    name: Execute Rollback
+    needs: [validate, backup]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: ${{ inputs.environment }}
+
+    steps:
+      - name: 📥 Checkout target version
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.validate.outputs.target_sha }}
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 📚 Install dependencies
+        run: npm ci
+
+      - name: 🧪 Run tests on target version
+        run: npm run test
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: 🏗️ Build target version
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ inputs.environment == 'production' && secrets.VITE_SUPABASE_URL || secrets.VITE_SUPABASE_URL_STAGING }}
+          VITE_SUPABASE_ANON_KEY: ${{ inputs.environment == 'production' && secrets.VITE_SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_ANON_KEY_STAGING }}
+
+      - name: 📚 Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: 🔄 Deploy rollback version
+        id: deploy
+        run: |
+          if [ "${{ inputs.environment }}" == "production" ]; then
+            URL=$(vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }})
+          else
+            URL=$(vercel deploy --token=${{ secrets.VERCEL_TOKEN }})
+          fi
+          
+          echo "url=$URL" >> $GITHUB_OUTPUT
+          echo "✅ Rolled back to: $URL"
+
+      - name: 🏥 Health check
+        run: |
+          echo "Waiting for deployment..."
+          sleep 15
+          
+          curl -f "${{ steps.deploy.outputs.url }}" || exit 1
+          echo "✅ Health check passed"
+
+      - name: 📝 Record rollback
+        run: |
+          curl -X POST "${{ secrets.VITE_SUPABASE_URL }}/functions/v1/make-server-96250128/deployments" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "version": "${{ needs.validate.outputs.target_sha }}",
+              "environment": "${{ inputs.environment }}",
+              "status": "rollback",
+              "deployed_at": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'",
+              "deployed_by": "${{ github.actor }}",
+              "commit_message": "ROLLBACK: ${{ inputs.reason }}",
+              "metadata": {
+                "from_version": "${{ needs.validate.outputs.current_sha }}",
+                "reason": "${{ inputs.reason }}"
+              }
+            }' || true
+
+  # ============================================================================
+  # Verify Rollback
+  # ============================================================================
+  verify:
+    name: Verify Rollback
+    needs: [validate, rollback]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 🔍 Verify deployment
+        run: |
+          echo "Verifying rollback..."
+          
+          # Check if correct version is deployed
+          DEPLOYED_SHA=$(curl -s "https://api.vercel.com/v13/deployments" \
+            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
+            | jq -r '.deployments[0].meta.githubCommitSha')
+          
+          if [ "$DEPLOYED_SHA" != "${{ needs.validate.outputs.target_sha }}" ]; then
+            echo "❌ Rollback verification failed"
+            echo "Expected: ${{ needs.validate.outputs.target_sha }}"
+            echo "Got: $DEPLOYED_SHA"
+            exit 1
+          fi
+          
+          echo "✅ Rollback verified"
+
+      - name: 📊 Monitor error rates
+        run: |
+          echo "Monitoring error rates..."
+          sleep 60
+          
+          # Check error rate after rollback
+          ERROR_RATE=$(curl -s "${{ secrets.VITE_SUPABASE_URL }}/functions/v1/make-server-96250128/metrics/error-rate" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" | jq -r '.rate' || echo "0")
+          
+          echo "Error rate: $ERROR_RATE"
+          
+          if (( $(echo "$ERROR_RATE > 0.10" | bc -l) )); then
+            echo "⚠️ Error rate still high after rollback"
+          else
+            echo "✅ Error rate normal"
+          fi
+
+  # ============================================================================
+  # Notify
+  # ============================================================================
+  notify:
+    name: Send Notifications
+    needs: [validate, rollback, verify]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: 📧 Send email notification
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: |
+            ${{ needs.rollback.result == 'success' && '✅' || '❌' }} 
+            Estal Rollback ${{ needs.rollback.result }}
+          to: ${{ secrets.NOTIFICATION_EMAIL }}
+          from: Estal CI/CD <noreply@estal.com>
+          body: |
+            Rollback Status: ${{ needs.rollback.result }}
+            
+            Environment: ${{ inputs.environment }}
+            Reason: ${{ inputs.reason }}
+            From: ${{ needs.validate.outputs.current_sha }}
+            To: ${{ needs.validate.outputs.target_sha }}
+            Initiated by: ${{ github.actor }}
+            
+            View workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        continue-on-error: true
+
+      - name: 💬 Send Slack notification
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "${{ needs.rollback.result == 'success' && '✅ Rollback successful!' || '❌ Rollback failed!' }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Estal Platform Rollback*\n\n*Status:* ${{ needs.rollback.result }}\n*Environment:* ${{ inputs.environment }}\n*Reason:* ${{ inputs.reason }}\n*From:* ${{ needs.validate.outputs.current_sha }}\n*To:* ${{ needs.validate.outputs.target_sha }}\n*Initiated by:* ${{ github.actor }}"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        continue-on-error: true
+
+      - name: 🚨 Create incident issue
+        if: needs.rollback.result == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Rollback Failed: ${{ inputs.environment }}`,
+              body: `## Rollback Failure\n\n**Environment:** ${{ inputs.environment }}\n**Reason:** ${{ inputs.reason }}\n**From:** ${{ needs.validate.outputs.current_sha }}\n**To:** ${{ needs.validate.outputs.target_sha }}\n\n**Action Required:** Manual intervention needed.\n\nView workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`,
+              labels: ['incident', 'rollback-failure', 'priority-high']
+            });

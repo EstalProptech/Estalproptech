@@ -1,0 +1,285 @@
+name: Release Management
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.2.3)'
+        required: true
+        type: string
+      release_type:
+        description: 'Type of release'
+        required: true
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+
+jobs:
+  # ============================================================================
+  # Generate Changelog
+  # ============================================================================
+  changelog:
+    name: Generate Changelog
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    outputs:
+      changelog: ${{ steps.generate.outputs.changelog }}
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔢 Determine version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION="${{ github.ref_name }}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: 📝 Generate changelog
+        id: generate
+        run: |
+          # Get previous tag
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          
+          if [ -z "$PREV_TAG" ]; then
+            PREV_TAG=$(git rev-list --max-parents=0 HEAD)
+          fi
+          
+          echo "Generating changelog from $PREV_TAG to HEAD..."
+          
+          # Generate changelog
+          CHANGELOG=$(git log $PREV_TAG..HEAD --pretty=format:"- %s (%h)" --no-merges)
+          
+          # Save to file
+          cat > CHANGELOG_TEMP.md << EOF
+          # Release ${{ steps.version.outputs.version }}
+          
+          **Release Date:** $(date +%Y-%m-%d)
+          
+          ## Changes
+          
+          $CHANGELOG
+          
+          ## Contributors
+          
+          $(git log $PREV_TAG..HEAD --format='%an' --no-merges | sort -u | sed 's/^/- /')
+          
+          ---
+          
+          **Full Changelog:** https://github.com/${{ github.repository }}/compare/$PREV_TAG...${{ steps.version.outputs.version }}
+          EOF
+          
+          # Export for GitHub output
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          cat CHANGELOG_TEMP.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: 📤 Upload changelog
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelog
+          path: CHANGELOG_TEMP.md
+          retention-days: 90
+
+  # ============================================================================
+  # Create GitHub Release
+  # ============================================================================
+  release:
+    name: Create GitHub Release
+    needs: changelog
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📥 Download changelog
+        uses: actions/download-artifact@v4
+        with:
+          name: changelog
+
+      - name: 🏷️ Create release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const changelog = fs.readFileSync('CHANGELOG_TEMP.md', 'utf8');
+            
+            const release = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: '${{ needs.changelog.outputs.version }}',
+              name: 'Release ${{ needs.changelog.outputs.version }}',
+              body: changelog,
+              draft: false,
+              prerelease: false,
+              generate_release_notes: true
+            });
+            
+            console.log(`Release created: ${release.data.html_url}`);
+
+      - name: 📦 Build release artifacts
+        run: |
+          npm ci
+          npm run build
+          
+          # Create release archive
+          tar -czf estal-${{ needs.changelog.outputs.version }}.tar.gz dist/
+          zip -r estal-${{ needs.changelog.outputs.version }}.zip dist/
+
+      - name: 📤 Upload release assets
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            const releases = await github.rest.repos.listReleases({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            
+            const release = releases.data.find(r => r.tag_name === '${{ needs.changelog.outputs.version }}');
+            
+            if (!release) {
+              console.log('Release not found');
+              return;
+            }
+            
+            // Upload tar.gz
+            await github.rest.repos.uploadReleaseAsset({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: release.id,
+              name: 'estal-${{ needs.changelog.outputs.version }}.tar.gz',
+              data: fs.readFileSync('estal-${{ needs.changelog.outputs.version }}.tar.gz')
+            });
+            
+            // Upload zip
+            await github.rest.repos.uploadReleaseAsset({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: release.id,
+              name: 'estal-${{ needs.changelog.outputs.version }}.zip',
+              data: fs.readFileSync('estal-${{ needs.changelog.outputs.version }}.zip')
+            });
+            
+            console.log('Release assets uploaded');
+
+  # ============================================================================
+  # Update Documentation
+  # ============================================================================
+  update-docs:
+    name: Update Documentation
+    needs: [changelog, release]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📝 Update CHANGELOG.md
+        run: |
+          if [ -f CHANGELOG.md ]; then
+            # Prepend new changelog
+            cat CHANGELOG_TEMP.md CHANGELOG.md > CHANGELOG_NEW.md
+            mv CHANGELOG_NEW.md CHANGELOG.md
+          else
+            mv CHANGELOG_TEMP.md CHANGELOG.md
+          fi
+
+      - name: 📝 Update version in package.json
+        run: |
+          VERSION="${{ needs.changelog.outputs.version }}"
+          VERSION_NUM="${VERSION#v}"
+          
+          npm version $VERSION_NUM --no-git-tag-version
+
+      - name: 💾 Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git add CHANGELOG.md package.json package-lock.json
+          git commit -m "docs: update changelog for ${{ needs.changelog.outputs.version }}" || exit 0
+          git push
+
+  # ============================================================================
+  # Notify Release
+  # ============================================================================
+  notify:
+    name: Notify Release
+    needs: [changelog, release]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: 📧 Send email notification
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: '🎉 Estal Release ${{ needs.changelog.outputs.version }}'
+          to: ${{ secrets.NOTIFICATION_EMAIL }}
+          from: Estal CI/CD <noreply@estal.com>
+          body: |
+            A new version of Estal has been released!
+            
+            Version: ${{ needs.changelog.outputs.version }}
+            Release Date: $(date +%Y-%m-%d)
+            
+            View release notes: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ needs.changelog.outputs.version }}
+        continue-on-error: true
+
+      - name: 💬 Send Slack notification
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "🎉 New Estal Release: ${{ needs.changelog.outputs.version }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Estal Platform Release*\n\n*Version:* ${{ needs.changelog.outputs.version }}\n*Date:* $(date +%Y-%m-%d)"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Release"
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ needs.changelog.outputs.version }}"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        continue-on-error: true
