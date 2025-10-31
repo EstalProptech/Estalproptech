@@ -253,7 +253,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // Get Supabase project info with fallback
             const info = await import('../utils/supabase/info').catch(() => ({ 
               projectId: 'ttsasgbrmswtjtenmksw', 
-              publicAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0c2FzZ2JybXN3dGp0ZW5ta3N3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzA2NjY5NDIsImV4cCI6MjA0NjI0Mjk0Mn0.J5lXZwYIgS8jLBzLgRf7V3TGZ_IwBq5L5_0Q3kF4I_0'
+              publicAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0c2FzZ2JybXN3dGp0ZW5ta3N3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzExMjUsImV4cCI6MjA3NzI0NzEyNX0.ubkbkAv5YPgABtAZi0s3VgISVNX7uUh11porsHPmMnc'
             }));
             const { projectId, publicAnonKey } = info;
             
@@ -373,7 +373,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Get Supabase project info with fallback
       const info = await import('../utils/supabase/info').catch(() => ({ 
         projectId: 'ttsasgbrmswtjtenmksw', 
-        publicAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0c2FzZ2JybXN3dGp0ZW5ta3N3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzA2NjY5NDIsImV4cCI6MjA0NjI0Mjk0Mn0.J5lXZwYIgS8jLBzLgRf7V3TGZ_IwBq5L5_0Q3kF4I_0'
+        publicAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0c2FzZ2JybXN3dGp0ZW5ta3N3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzExMjUsImV4cCI6MjA3NzI0NzEyNX0.ubkbkAv5YPgABtAZi0s3VgISVNX7uUh11porsHPmMnc'
       }));
       const { projectId, publicAnonKey } = info;
       
