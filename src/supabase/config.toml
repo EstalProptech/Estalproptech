@@ -28,6 +28,6 @@ site_url = "http://localhost:5173"
 additional_redirect_urls = ["https://estalproptech.com"]
 jwt_expiry = 3600
 
-[functions.make-server-96250128]
+[functions.server]
 # Edge Function Configuration
 verify_jwt = false

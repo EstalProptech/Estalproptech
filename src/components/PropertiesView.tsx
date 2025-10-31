@@ -562,10 +562,10 @@ export function PropertiesView() {
                 });
 
                 return (
-                  <Card 
-                    ref={ref}
-                    className={`rounded-[16px] md:rounded-[20px] shadow-md md:shadow-lg border-border overflow-hidden hover:shadow-xl md:hover:shadow-2xl hover:border-primary/30 transition-all duration-300 cursor-pointer group h-full touch-manipulation ${isSwiping ? 'scale-98' : ''}`}
-                  >
+                  <div ref={ref}>
+                    <Card 
+                      className={`rounded-[16px] md:rounded-[20px] shadow-md md:shadow-lg border-border overflow-hidden hover:shadow-xl md:hover:shadow-2xl hover:border-primary/30 transition-all duration-300 cursor-pointer group h-full touch-manipulation ${isSwiping ? 'scale-98' : ''}`}
+                    >
                     <div 
                       className="relative h-48 md:h-56 overflow-hidden"
                       onClick={() => handlePropertyClick(property)}
@@ -644,6 +644,7 @@ export function PropertiesView() {
                       </div>
                     </CardContent>
                   </Card>
+                  </div>
                 );
               };
 

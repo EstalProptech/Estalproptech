@@ -270,6 +270,13 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 - **Quick Start**: [QUICK_ACTION_CHECKLIST.md](./QUICK_ACTION_CHECKLIST.md) ⚡ 15-min complete setup
 - **Verify Connection**: [SUPABASE_CONNECTION_VERIFIED.md](./SUPABASE_CONNECTION_VERIFIED.md) ✅ Connection status
 
+**Edge Function Errors:**
+- **"Module not found securityMiddleware"**: [EDGE_FUNCTION_ERROR_COMPLETE_FIX.md](./EDGE_FUNCTION_ERROR_COMPLETE_FIX.md) ⚡ 2-min fix
+  - **server function**: [server-edge-function-single-file.ts](./server-edge-function-single-file.ts) - Deploy this!
+  - **make-server function**: [edge-function-single-file.ts](./edge-function-single-file.ts) - Deploy this!
+- **Quick fix guide**: [EDGE_FUNCTION_DEPLOYMENT_QUICK_FIX.md](./EDGE_FUNCTION_DEPLOYMENT_QUICK_FIX.md)
+- **Complete explanation**: [FIX_EDGE_FUNCTION_DEPLOYMENT.md](./FIX_EDGE_FUNCTION_DEPLOYMENT.md)
+
 **Database Errors:**
 - **"Column user_id does not exist"**: [FIX_USER_ID_ERROR_NOW.md](./FIX_USER_ID_ERROR_NOW.md) ⚡ 3-min fix
 - **"LINE 1: /supabase/functions/..."**: [FIX_SQL_PATH_ERROR.md](./FIX_SQL_PATH_ERROR.md) ⚡ 2-min fix  

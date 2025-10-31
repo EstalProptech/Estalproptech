@@ -252,8 +252,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           try {
             // Get Supabase project info with fallback
             const info = await import('../utils/supabase/info').catch(() => ({ 
-              projectId: 'hdhncpmsxgqjpdpahaxh', 
-              publicAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkaG5jcG1zeGdxanBkcGFoYXhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEwODM0ODIsImV4cCI6MjA3NjY1OTQ4Mn0.uKPiLWMohauKtdtizUs5Riin3UTdBuyFmovY2EnZBHY'
+              projectId: 'ttsasgbrmswtjtenmksw', 
+              publicAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0c2FzZ2JybXN3dGp0ZW5ta3N3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzA2NjY5NDIsImV4cCI6MjA0NjI0Mjk0Mn0.J5lXZwYIgS8jLBzLgRf7V3TGZ_IwBq5L5_0Q3kF4I_0'
             }));
             const { projectId, publicAnonKey } = info;
             
@@ -372,8 +372,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Get Supabase project info with fallback
       const info = await import('../utils/supabase/info').catch(() => ({ 
-        projectId: 'hdhncpmsxgqjpdpahaxh', 
-        publicAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkaG5jcG1zeGdxanBkcGFoYXhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEwODM0ODIsImV4cCI6MjA3NjY1OTQ4Mn0.uKPiLWMohauKtdtizUs5Riin3UTdBuyFmovY2EnZBHY'
+        projectId: 'ttsasgbrmswtjtenmksw', 
+        publicAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0c2FzZ2JybXN3dGp0ZW5ta3N3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzA2NjY5NDIsImV4cCI6MjA0NjI0Mjk0Mn0.J5lXZwYIgS8jLBzLgRf7V3TGZ_IwBq5L5_0Q3kF4I_0'
       }));
       const { projectId, publicAnonKey } = info;
       
