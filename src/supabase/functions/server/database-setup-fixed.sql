@@ -19,7 +19,7 @@ SELECT
   (value->>'created_at')::timestamp with time zone as created_at,
   (value->>'last_login')::timestamp with time zone as last_login,
   (value->>'last_login')::timestamp with time zone as updated_at
-FROM kv_store_96250128
+FROM kv_store_0ffb685e
 WHERE key LIKE 'user_profile:%';
 
 -- Grant permissions on the view

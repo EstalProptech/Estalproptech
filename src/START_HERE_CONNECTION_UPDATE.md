@@ -1,7 +1,7 @@
 # 🎯 START HERE - Supabase Connection Update
 
 **Project:** EstalProptech's Project  
-**Project ID:** `ttsasgbrmswtjtenmksw`  
+**Project ID:** `uiawpsnhjpgkeepvagbs`  
 **Status:** ✅ **CONFIGURATION COMPLETE**
 
 ---

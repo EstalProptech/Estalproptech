@@ -28,10 +28,10 @@
 ## ✅ What's Been Completed
 
 ### 1. Supabase Configuration ✅
-- **Project ID**: `ttsasgbrmswtjtenmksw`
-- **Project URL**: `https://ttsasgbrmswtjtenmksw.supabase.co`
-- **Database Host**: `db.ttsasgbrmswtjtenmksw.supabase.co`
-- **API Key**: Updated in `/utils/supabase/info.tsx`
+- **Project ID**: `uiawpsnhjpgkeepvagbs`
+- **Project URL**: `https://uiawpsnhjpgkeepvagbs.supabase.co`
+- **Database Host**: `db.uiawpsnhjpgkeepvagbs.supabase.co`
+- **API Key**: Updated in `/utils/supabase/info.tsx` ⚠️ **NEEDS NEW ANON KEY**
 - **Config File**: Updated `/supabase/config.toml`
 
 ### 2. Environment Setup ✅
@@ -106,7 +106,7 @@
 
 ### Step 1: Deploy Database (5 minutes)
 **Action**: Run SQL schema in Supabase
-**Link**: https://supabase.com/dashboard/project/ttsasgbrmswtjtenmksw/sql/new
+**Link**: https://supabase.com/dashboard/project/uiawpsnhjpgkeepvagbs/sql/new
 **File**: `/supabase/functions/server/database-setup-fixed.sql`
 **Guide**: `/DATABASE_DEPLOYMENT_NOW.md`
 
@@ -115,14 +115,14 @@
 **Command**:
 ```bash
 supabase login
-supabase link --project-ref ttsasgbrmswtjtenmksw
+supabase link --project-ref uiawpsnhjpgkeepvagbs
 supabase functions deploy make-server
 ```
 **Guide**: `/DEPLOY_EDGE_FUNCTION.md`
 
 ### Step 3: Create Admin User (2 minutes)
 **Action**: Create first user in Supabase dashboard
-**Link**: https://supabase.com/dashboard/project/ttsasgbrmswtjtenmksw/auth/users
+**Link**: https://supabase.com/dashboard/project/uiawpsnhjpgkeepvagbs/auth/users
 **Credentials**: admin@estal.com / SecurePass123!
 
 ### Step 4: Push to GitHub (5 minutes)
@@ -149,12 +149,12 @@ git push -u origin main
 ### Supabase Dashboard
 | Service | URL |
 |---------|-----|
-| SQL Editor | https://supabase.com/dashboard/project/ttsasgbrmswtjtenmksw/sql/new |
-| Table Editor | https://supabase.com/dashboard/project/ttsasgbrmswtjtenmksw/editor |
-| Auth Users | https://supabase.com/dashboard/project/ttsasgbrmswtjtenmksw/auth/users |
-| Edge Functions | https://supabase.com/dashboard/project/ttsasgbrmswtjtenmksw/functions |
-| API Settings | https://supabase.com/dashboard/project/ttsasgbrmswtjtenmksw/settings/api |
-| Database | https://supabase.com/dashboard/project/ttsasgbrmswtjtenmksw/settings/database |
+| SQL Editor | https://supabase.com/dashboard/project/uiawpsnhjpgkeepvagbs/sql/new |
+| Table Editor | https://supabase.com/dashboard/project/uiawpsnhjpgkeepvagbs/editor |
+| Auth Users | https://supabase.com/dashboard/project/uiawpsnhjpgkeepvagbs/auth/users |
+| Edge Functions | https://supabase.com/dashboard/project/uiawpsnhjpgkeepvagbs/functions |
+| API Settings | https://supabase.com/dashboard/project/uiawpsnhjpgkeepvagbs/settings/api |
+| Database | https://supabase.com/dashboard/project/uiawpsnhjpgkeepvagbs/settings/database |
 
 ### Deployment
 - **GitHub**: https://github.com/EstalProptech/Estal
@@ -246,13 +246,13 @@ ls -la | grep -E "(START_HERE|QUICK_DEPLOY|DATABASE_DEPLOYMENT)"
 
 ```bash
 # Database connection (if using psql)
-psql -h db.ttsasgbrmswtjtenmksw.supabase.co -p 5432 -d postgres -U postgres
+psql -h db.uiawpsnhjpgkeepvagbs.supabase.co -p 5432 -d postgres -U postgres
 
 # Deploy edge function
 supabase functions deploy make-server
 
 # Test edge function
-curl https://ttsasgbrmswtjtenmksw.supabase.co/functions/v1/make-server/health
+curl https://uiawpsnhjpgkeepvagbs.supabase.co/functions/v1/make-server/health
 
 # Local development
 npm install && npm run dev
