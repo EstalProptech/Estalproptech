@@ -59,7 +59,7 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 
 Your project uses these environment files:
 
-```
+```text
 .env.example          # Template with placeholders (committed to Git)
 .env.local.example    # Quick-start template (committed to Git)
 .env.local            # Your actual keys (NEVER committed - in .gitignore)
@@ -165,7 +165,7 @@ console.log('Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
 ### Test 2: Test Supabase Connection
 
 The app will show connection status in the browser console:
-```
+```text
 ✅ Supabase client initialized: https://ttsasgbrmswtjtenmksw.supabase.co
 💡 Demo accounts available: admin@estal.com, accountant@estal.com, owner@estal.com
 ```
@@ -184,12 +184,12 @@ Try logging in with demo credentials:
 For direct database access (psql, database tools, etc.):
 
 ### Direct Connection (Port 5432)
-```
+```text
 postgresql://postgres:[YOUR_DB_PASSWORD]@db.ttsasgbrmswtjtenmksw.supabase.co:5432/postgres
 ```
 
 ### Connection Pooler (Port 6543 - Recommended for Serverless)
-```
+```text
 postgresql://postgres:[YOUR_DB_PASSWORD]@db.ttsasgbrmswtjtenmksw.supabase.co:6543/postgres
 ```
 

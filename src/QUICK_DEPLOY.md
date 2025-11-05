@@ -89,7 +89,7 @@ git push -u origin main
 2. Import: `EstalProptech/Estal`
 
 3. Add environment variables:
-   ```
+   ```env
    VITE_SUPABASE_URL = https://ttsasgbrmswtjtenmksw.supabase.co
    VITE_SUPABASE_ANON_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0c2FzZ2JybXN3dGp0ZW5ta3N3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzExMjUsImV4cCI6MjA3NzI0NzEyNX0.ubkbkAv5YPgABtAZi0s3VgISVNX7uUh11porsHPmMnc
    NODE_ENV = production
