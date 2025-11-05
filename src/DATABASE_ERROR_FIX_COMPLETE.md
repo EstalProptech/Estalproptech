@@ -7,7 +7,7 @@
 ## 📦 What You Have Now
 
 ### 🚨 Emergency Resources (Use When Error Occurs)
-```
+```text
 1. FIX_USER_ID_ERROR_NOW.md ⚡
    → 3-minute copy-paste fix
    → No reading required
@@ -20,7 +20,7 @@
 ```
 
 ### 📚 Complete Understanding (Read After Fix)
-```
+```text
 3. DATABASE_FIX_USER_ID_ERROR.md 📖
    → Why the error happened
    → What the fix does

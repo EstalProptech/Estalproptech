@@ -40,7 +40,7 @@ git init
 ```
 
 **Expected output:**
-```
+```text
 Initialized empty Git repository in /path/to/estal-platform/.git/
 ```
 
@@ -72,7 +72,7 @@ git commit -m "Initial commit: Estal PropTech Platform v1.0"
 ```
 
 **Expected output:**
-```
+```text
 [main (root-commit) abc1234] Initial commit: Estal PropTech Platform v1.0
  XXX files changed, XXXX insertions(+)
  create mode 100644 App.tsx
@@ -203,7 +203,7 @@ git push -u origin feature/ai-insights
 
 ### Recommended Branch Names
 
-```
+```text
 feature/description    - New features
 fix/bug-name          - Bug fixes
 docs/update-topic     - Documentation updates
